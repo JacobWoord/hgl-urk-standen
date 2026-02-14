@@ -1,0 +1,18 @@
+{
+  "name": "hgl-standen",
+  "version": "1.0.0",
+  "description": "HGL Urk Billiards Competition Standings Viewer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["billiards", "standings", "hgl", "urk"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cheerio": "^1.0.0-rc.12",
+    "node-fetch": "^2.7.0"
+  }
+}

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HGL Urk - Standen & Ranglijsten</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600,700&family=DM+Sans:wght@400,500,600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #faf7f0;
+      color: #1a3a2a;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a3a2a 0%, #2d5a3f 100%);
+      color: #d4a847;
+      padding: 2rem 1rem;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      opacity: 0.95;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .selector-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .selector-section label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #1a3a2a;
+    }
+
+    .selector-controls {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    select {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.75rem;
+      font-size: 1rem;
+      font-family: 'DM Sans', sans-serif;
+      border: 2px solid #2d5a3f;
+      border-radius: 8px;
+      background: white;
+      color: #1a3a2a;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 0.75rem 2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      background: #2d5a3f;
+      color: #d4a847;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background: #1a3a2a;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .competition-title {
+      text-align: center;
+      margin: 2rem 0 1rem;
+    }
+
+    .competition-title h2 {
+      font-family: 'Playfair Display', serif;
+      color: #d4a847;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .table-wrapper {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    thead {
+      background: #2d5a3f;
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    th {
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: help;
+      position: relative;
+    }
+
+    th.sticky {
+      position: sticky;
+      background: #2d5a3f;
+      z-index: 11;
+    }
+
+    th.sticky:first-child {
+      left: 0;
+    }
+
+    th.sticky:nth-child(2) {
+      left: 50px;
+    }
+
+    td {
+      padding: 0.75rem 0.5rem;
+      text-align: center;
+      border-bottom: 1px solid #e8e4db;
+    }
+
+    td.sticky {
+      position: sticky;
+      background: inherit;
+      z-index: 5;
+    }
+
+    td.sticky:first-child {
+      left: 0;
+      font-weight: 600;
+    }
+
+    td.sticky:nth-child(2) {
+      left: 50px;
+      text-align: left;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #faf7f0;
+    }
+
+    tbody tr:nth-child(odd) {
+      background: white;
+    }
+
+    tbody tr:hover {
+      background: #f0ede3;
+    }
+
+    /* Top 3 highlighting */
+    tbody tr.rank-1 {
+      background: linear-gradient(90deg, #ffd70020 0%, #ffffff 100%) !important;
+    }
+
+    tbody tr.rank-2 {
+      background: linear-gradient(90deg, #c0c0c020 0%, #ffffff 100%) !important;
+    }
+
+    tbody tr.rank-3 {
+      background: linear-gradient(90deg, #cd7f3220 0%, #ffffff 100%) !important;
+    }
+
+    .rank-medal {
+      font-size: 1.2rem;
+      margin-right: 0.25rem;
+    }
+
+    .pnt-col {
+      font-weight: 700;
+      color: #1a3a2a;
+      font-size: 1.05rem;
+    }
+
+    .scroll-hint {
+      text-align: center;
+      padding: 0.75rem;
+      color: #666;
+      font-size: 0.85rem;
+      font-style: italic;
+      background: #f0ede3;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: #1a3a2a;
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      z-index: 1000;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 0.5rem;
+    }
+
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #1a3a2a;
+    }
+
+    th:hover .tooltip {
+      opacity: 1;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: #2d5a3f;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    footer a:hover {
+      color: #d4a847;
+    }
+
+    .timestamp {
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      opacity: 0.8;
+    }
+
+    .error-message {
+      background: #ff4444;
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    .error-message button {
+      margin-top: 0.5rem;
+      background: white;
+      color: #ff4444;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.1rem;
+      color: #666;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 1.5rem;
+      }
+
+      header p {
+        font-size: 1rem;
+      }
+
+      .competition-title h2 {
+        font-size: 1.4rem;
+      }
+
+      table {
+        font-size: 0.85rem;
+      }
+
+      th, td {
+        padding: 0.5rem 0.35rem;
+      }
+
+      th.sticky:nth-child(2),
+      td.sticky:nth-child(2) {
+        left: 45px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>HGL Urk</h1>
+    <p>Standen & Ranglijsten</p>
+  </header>
+
+  <div class="container">
+    <div class="selector-section">
+      <label for="competitie-select">Selecteer competitie:</label>
+      <div class="selector-controls">
+        <select id="competitie-select" disabled>
+          <option value="">Laden...</option>
+        </select>
+        <button id="bekijk-btn" disabled>Bekijk</button>
+      </div>
+    </div>
+
+    <div id="error-container"></div>
+
+    <div id="competition-name" class="competition-title hidden"></div>
+
+    <div id="table-container" class="hidden">
+      <div class="table-wrapper">
+        <div class="table-container">
+          <table id="standen-table">
+            <thead>
+              <tr>
+                <th class="sticky" data-tooltip="Positie">Pos</th>
+                <th class="sticky" data-tooltip="Speler">Speler</th>
+                <th data-tooltip="Wedstrijden gespeeld">Wed</th>
+                <th data-tooltip="Gewonnen">W</th>
+                <th data-tooltip="Gelijk">G</th>
+                <th data-tooltip="Verloren">V</th>
+                <th data-tooltip="Punten">Pnt</th>
+                <th data-tooltip="Hoogste serie">HS</th>
+                <th data-tooltip="Klassepunten">KP</th>
+                <th data-tooltip="Moyenne oud">MoyO</th>
+                <th data-tooltip="Moyenne nieuw">MoyN</th>
+                <th data-tooltip="Carambole %">Car</th>
+                <th data-tooltip="OMH %">OMH</th>
+                <th data-tooltip="Rangorde carambole">ROc</th>
+                <th data-tooltip="Rangorde punten">ROp</th>
+                <th data-tooltip="Rangorde totaal">ROt</th>
+              </tr>
+            </thead>
+            <tbody id="standen-tbody"></tbody>
+          </table>
+        </div>
+        <div class="scroll-hint">← Veeg voor meer kolommen →</div>
+      </div>
+    </div>
+
+    <div id="loading" class="loading hidden">Laden...</div>
+
+    <footer>
+      <div>
+        Gegevens van <a href="https://www.biljartscore.nl/hetgroenelaken/standen" target="_blank">biljartscore.nl</a>
+      </div>
+      <div class="timestamp" id="timestamp"></div>
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let competities = [];
+    let currentData = null;
+
+    // Column tooltips
+    const tooltips = {
+      'Pos': 'Positie',
+      'Speler': 'Speler',
+      'Wed': 'Wedstrijden gespeeld',
+      'W': 'Gewonnen',
+      'G': 'Gelijk',
+      'V': 'Verloren',
+      'Pnt': 'Punten',
+      'HS': 'Hoogste serie',
+      'KP': 'Klassepunten',
+      'MoyO': 'Moyenne oud',
+      'MoyN': 'Moyenne nieuw',
+      'Car': 'Carambole %',
+      'OMH': 'OMH %',
+      'ROc': 'Rangorde carambole',
+      'ROp': 'Rangorde punten',
+      'ROt': 'Rangorde totaal'
+    };
+
+    // Add tooltips to headers
+    document.querySelectorAll('th[data-tooltip]').forEach(th => {
+      const tooltip = document.createElement('span');
+      tooltip.className = 'tooltip';
+      tooltip.textContent = th.getAttribute('data-tooltip');
+      th.appendChild(tooltip);
+    });
+
+    // Load competitions on page load
+    async function loadCompetities() {
+      try {
+        const response = await fetch(`${API_BASE}/api/competities`);
+        if (!response.ok) throw new Error('Failed to fetch competitions');
+        
+        competities = await response.json();
+        const select = document.getElementById('competitie-select');
+        
+        select.innerHTML = '<option value="">-- Kies een competitie --</option>';
+        competities.forEach(comp => {
+          const option = document.createElement('option');
+          option.value = comp.id;
+          option.textContent = comp.naam;
+          select.appendChild(option);
+        });
+        
+        select.disabled = false;
+        document.getElementById('bekijk-btn').disabled = false;
+      } catch (error) {
+        showError('Kon competities niet laden. Probeer het opnieuw.', () => loadCompetities());
+      }
+    }
+
+    // Load standings
+    async function loadStanden(competitieId) {
+      hideError();
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('table-container').classList.add('hidden');
+      document.getElementById('competition-name').classList.add('hidden');
+
+      try {
+        const response = await fetch(`${API_BASE}/api/standen/${competitieId}`);
+        if (!response.ok) throw new Error('Failed to fetch standings');
+        
+        currentData = await response.json();
+        renderStanden(currentData);
+        
+        document.getElementById('loading').classList.add('hidden');
+      } catch (error) {
+        document.getElementById('loading').classList.add('hidden');
+        showError('Kon standen niet laden. Probeer het opnieuw.', () => loadStanden(competitieId));
+      }
+    }
+
+    // Render standings table
+    function renderStanden(data) {
+      const nameEl = document.getElementById('competition-name');
+      nameEl.innerHTML = `<h2>${data.competitie}</h2>`;
+      nameEl.classList.remove('hidden');
+
+      const tbody = document.getElementById('standen-tbody');
+      tbody.innerHTML = '';
+
+      data.spelers.forEach(speler => {
+        const tr = document.createElement('tr');
+        
+        // Add rank class for top 3
+        if (speler.pos === 1) tr.classList.add('rank-1');
+        else if (speler.pos === 2) tr.classList.add('rank-2');
+        else if (speler.pos === 3) tr.classList.add('rank-3');
+
+        // Position with medal
+        const posCell = document.createElement('td');
+        posCell.className = 'sticky';
+        let posContent = speler.pos || '';
+        if (speler.pos === 1) posContent = '<span class="rank-medal">🥇</span>' + posContent;
+        else if (speler.pos === 2) posContent = '<span class="rank-medal">🥈</span>' + posContent;
+        else if (speler.pos === 3) posContent = '<span class="rank-medal">🥉</span>' + posContent;
+        posCell.innerHTML = posContent;
+        tr.appendChild(posCell);
+
+        // Player name
+        const naamCell = document.createElement('td');
+        naamCell.className = 'sticky';
+        naamCell.textContent = speler.naam + (speler.handicap ? ` (${speler.handicap})` : '');
+        tr.appendChild(naamCell);
+
+        // Other columns
+        const columns = ['wed', 'w', 'g', 'v', 'pnt', 'hs', 'kp', 'moyo', 'moyn', 'car', 'omh', 'roc', 'rop', 'rot'];
+        columns.forEach(col => {
+          const td = document.createElement('td');
+          if (col === 'pnt') td.className = 'pnt-col';
+          
+          let value = speler[col];
+          if (value === null || value === undefined) {
+            td.textContent = '-';
+          } else {
+            td.textContent = value;
+          }
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('table-container').classList.remove('hidden');
+
+      // Update timestamp
+      const timestamp = new Date(data.laatstBijgewerkt);
+      document.getElementById('timestamp').textContent = 
+        `Laatst bijgewerkt: ${timestamp.toLocaleDateString('nl-NL')} om ${timestamp.toLocaleTimeString('nl-NL')}`;
+    }
+
+    // Error handling
+    function showError(message, retryFn) {
+      const container = document.getElementById('error-container');
+      container.innerHTML = `
+        <div class="error-message">
+          <div>${message}</div>
+          <button onclick="(${retryFn.toString()})()">Opnieuw proberen</button>
+        </div>
+      `;
+    }
+
+    function hideError() {
+      document.getElementById('error-container').innerHTML = '';
+    }
+
+    // Event listeners
+    document.getElementById('bekijk-btn').addEventListener('click', () => {
+      const select = document.getElementById('competitie-select');
+      const competitieId = select.value;
+      if (competitieId) {
+        loadStanden(competitieId);
+      }
+    });
+
+    document.getElementById('competitie-select').addEventListener('change', (e) => {
+      const btn = document.getElementById('bekijk-btn');
+      btn.disabled = !e.target.value;
+    });
+
+    // Allow Enter key to submit
+    document.getElementById('competitie-select').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && e.target.value) {
+        loadStanden(e.target.value);
+      }
+    });
+
+    // Initialize
+    loadCompetities();
+  </script>
+</body>
+</html>
