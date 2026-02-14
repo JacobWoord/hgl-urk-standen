@@ -431,8 +431,8 @@
     <div id="loading" class="loading hidden">Laden...</div>
 
     <div id="share-container" class="share-button-container hidden">
-      <button id="whatsapp-share-btn" class="whatsapp-share-btn">
-        📤 Deel via WhatsApp
+      <button id="pdf-download-btn" class="whatsapp-share-btn">
+        📄 Download PDF
       </button>
     </div>
 
@@ -621,38 +621,152 @@
       }
     });
 
-    // Generate WhatsApp share text
-    function generateShareText() {
+    // Generate PDF
+    function generatePDF() {
       if (!currentData || !currentData.spelers || currentData.spelers.length === 0) {
-        return '';
+        alert('Geen gegevens beschikbaar om te exporteren');
+        return;
       }
 
-      const top3 = currentData.spelers.slice(0, 3);
-      const medals = ['🥇', '🥈', '🥉'];
-      
-      let shareText = `🎱 HGL Urk - ${currentData.competitie}\n\n`;
-      
-      top3.forEach((speler, index) => {
-        shareText += `${medals[index]} ${speler.pos}. ${speler.naam} - ${speler.pnt} pnt\n`;
-      });
-      
-      shareText += `\nBekijk de volledige stand:\n${window.location.href}`;
-      
-      return shareText;
+      const btn = document.getElementById('pdf-download-btn');
+      const originalText = btn.textContent;
+      btn.textContent = '⏳ PDF maken...';
+      btn.disabled = true;
+
+      // Small delay to show loading state
+      setTimeout(() => {
+        try {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+          });
+
+          // Header
+          doc.setFontSize(20);
+          doc.setTextColor(212, 168, 71); // Gold
+          doc.text('HGL Urk - Standen & Ranglijsten', 148, 15, { align: 'center' });
+
+          // Competition name
+          doc.setFontSize(14);
+          doc.setTextColor(26, 58, 42); // Dark green
+          doc.text(currentData.competitie, 148, 25, { align: 'center' });
+
+          // Prepare table data
+          const tableData = currentData.spelers.map(speler => [
+            speler.pos || '-',
+            speler.naam + (speler.handicap ? ` (${speler.handicap})` : ''),
+            speler.wed ?? '-',
+            speler.w ?? '-',
+            speler.g ?? '-',
+            speler.v ?? '-',
+            speler.pnt ?? '-',
+            speler.hs ?? '-',
+            speler.kp ?? '-',
+            speler.moyo ?? '-',
+            speler.moyn ?? '-',
+            speler.car ?? '-',
+            speler.omh ?? '-',
+            speler.roc ?? '-',
+            speler.rop ?? '-',
+            speler.rot ?? '-'
+          ]);
+
+          // Table
+          doc.autoTable({
+            head: [['Pos', 'Speler', 'Wed', 'W', 'G', 'V', 'Pnt', 'HS', 'KP', 'MoyO', 'MoyN', 'Car', 'OMH', 'ROc', 'ROp', 'ROt']],
+            body: tableData,
+            startY: 32,
+            theme: 'grid',
+            headStyles: {
+              fillColor: [45, 90, 63], // Green
+              textColor: [212, 168, 71], // Gold
+              fontStyle: 'bold',
+              halign: 'center',
+              fontSize: 8
+            },
+            bodyStyles: {
+              fontSize: 7,
+              halign: 'center'
+            },
+            columnStyles: {
+              0: { cellWidth: 10, halign: 'center' }, // Pos
+              1: { cellWidth: 35, halign: 'left' },   // Speler
+              2: { cellWidth: 12 },  // Wed
+              3: { cellWidth: 10 },  // W
+              4: { cellWidth: 10 },  // G
+              5: { cellWidth: 10 },  // V
+              6: { cellWidth: 12, fontStyle: 'bold' }, // Pnt
+              7: { cellWidth: 12 },  // HS
+              8: { cellWidth: 12 },  // KP
+              9: { cellWidth: 14 },  // MoyO
+              10: { cellWidth: 14 }, // MoyN
+              11: { cellWidth: 12 }, // Car
+              12: { cellWidth: 12 }, // OMH
+              13: { cellWidth: 12 }, // ROc
+              14: { cellWidth: 12 }, // ROp
+              15: { cellWidth: 12 }  // ROt
+            },
+            didParseCell: function(data) {
+              // Highlight top 3 rows with medal colors
+              if (data.section === 'body' && data.row.index < 3) {
+                if (data.row.index === 0) {
+                  // Gold
+                  data.cell.styles.fillColor = [255, 215, 0, 0.15];
+                } else if (data.row.index === 1) {
+                  // Silver
+                  data.cell.styles.fillColor = [192, 192, 192, 0.15];
+                } else if (data.row.index === 2) {
+                  // Bronze
+                  data.cell.styles.fillColor = [205, 127, 50, 0.15];
+                }
+              }
+            },
+            margin: { top: 32, right: 10, bottom: 25, left: 10 }
+          });
+
+          // Footer
+          const pageHeight = doc.internal.pageSize.height;
+          doc.setFontSize(9);
+          doc.setTextColor(100, 100, 100);
+          doc.text('Gegevens van biljartscore.nl', 148, pageHeight - 15, { align: 'center' });
+          
+          // Timestamp
+          const timestamp = new Date(currentData.laatstBijgewerkt);
+          const dateStr = timestamp.toLocaleDateString('nl-NL');
+          const timeStr = timestamp.toLocaleTimeString('nl-NL');
+          doc.setFontSize(8);
+          doc.text(`Bijgewerkt: ${dateStr} ${timeStr}`, 148, pageHeight - 10, { align: 'center' });
+
+          // Generate filename
+          const today = new Date().toISOString().split('T')[0];
+          const cleanCompName = currentData.competitie.replace(/[^a-zA-Z0-9]/g, '-');
+          const filename = `HGL-Urk-${cleanCompName}-${today}.pdf`;
+
+          // Download
+          doc.save(filename);
+
+          btn.textContent = originalText;
+          btn.disabled = false;
+        } catch (error) {
+          console.error('PDF generation error:', error);
+          alert('Fout bij het maken van de PDF. Probeer het opnieuw.');
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      }, 100);
     }
 
-    // WhatsApp share button handler
-    document.getElementById('whatsapp-share-btn').addEventListener('click', () => {
-      const shareText = generateShareText();
-      if (shareText) {
-        const encodedText = encodeURIComponent(shareText);
-        const whatsappUrl = `https://wa.me/?text=${encodedText}`;
-        window.open(whatsappUrl, '_blank');
-      }
-    });
+    // PDF download button handler
+    document.getElementById('pdf-download-btn').addEventListener('click', generatePDF);
 
     // Initialize
     loadCompetities();
   </script>
+
+  <!-- jsPDF Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </body>
 </html>
