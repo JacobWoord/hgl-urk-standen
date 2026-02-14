@@ -316,6 +316,38 @@
       display: none;
     }
 
+    .share-button-container {
+      text-align: center;
+      margin: 1.5rem 0;
+    }
+
+    .whatsapp-share-btn {
+      background: #2d5a3f;
+      color: #d4a847;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: 'DM Sans', sans-serif;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .whatsapp-share-btn:hover {
+      background: #3d6a4f;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .whatsapp-share-btn:active {
+      transform: translateY(0);
+    }
+
     @media (max-width: 768px) {
       header h1 {
         font-size: 1.5rem;
@@ -398,6 +430,12 @@
 
     <div id="loading" class="loading hidden">Laden...</div>
 
+    <div id="share-container" class="share-button-container hidden">
+      <button id="whatsapp-share-btn" class="whatsapp-share-btn">
+        📤 Deel via WhatsApp
+      </button>
+    </div>
+
     <footer>
       <div>
         Gegevens van <a href="https://www.biljartscore.nl/hetgroenelaken/standen" target="_blank">biljartscore.nl</a>
@@ -469,6 +507,7 @@
       document.getElementById('loading').classList.remove('hidden');
       document.getElementById('table-container').classList.add('hidden');
       document.getElementById('competition-name').classList.add('hidden');
+      document.getElementById('share-container').classList.add('hidden');
 
       try {
         const response = await fetch(`${API_BASE}/api/standen/${competitieId}`);
@@ -537,6 +576,9 @@
 
       document.getElementById('table-container').classList.remove('hidden');
 
+      // Show share button
+      document.getElementById('share-container').classList.remove('hidden');
+
       // Update timestamp
       const timestamp = new Date(data.laatstBijgewerkt);
       document.getElementById('timestamp').textContent = 
@@ -576,6 +618,36 @@
     document.getElementById('competitie-select').addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && e.target.value) {
         loadStanden(e.target.value);
+      }
+    });
+
+    // Generate WhatsApp share text
+    function generateShareText() {
+      if (!currentData || !currentData.spelers || currentData.spelers.length === 0) {
+        return '';
+      }
+
+      const top3 = currentData.spelers.slice(0, 3);
+      const medals = ['🥇', '🥈', '🥉'];
+      
+      let shareText = `🎱 HGL Urk - ${currentData.competitie}\n\n`;
+      
+      top3.forEach((speler, index) => {
+        shareText += `${medals[index]} ${speler.pos}. ${speler.naam} - ${speler.pnt} pnt\n`;
+      });
+      
+      shareText += `\nBekijk de volledige stand:\n${window.location.href}`;
+      
+      return shareText;
+    }
+
+    // WhatsApp share button handler
+    document.getElementById('whatsapp-share-btn').addEventListener('click', () => {
+      const shareText = generateShareText();
+      if (shareText) {
+        const encodedText = encodeURIComponent(shareText);
+        const whatsappUrl = `https://wa.me/?text=${encodedText}`;
+        window.open(whatsappUrl, '_blank');
       }
     });
 
